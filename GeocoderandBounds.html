@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html>
+   <head>
+        <title> Brisbane! </title>
+         <style>
+	      html, body {
+		height: 100%;
+		margin: 0px;
+		padding: 0px
+	      }
+	</style>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script>
+	   
+	var map;
+	function initialize() {
+	    var myOptions = {
+	      zoom: 8,
+	      center: new google.maps.LatLng(-34.397, 150.644),
+	      mapTypeId: google.maps.MapTypeId.ROADMAP
+	    };
+
+	    map = new google.maps.Map(document.getElementById('map-canvas'), myOptions);
+	    var geocoder = new google.maps.Geocoder();
+
+	    var request = {
+	      address: "Brisbane"
+	    };
+	    var south = 90; 
+	    var north = -90;
+	    var east = -180;
+	    var west = 180;
+	    geocoder.geocode (request, function(results, status){
+		if (status === google.maps.GeocoderStatus.OK){
+		    for (var i = 0; i<results.length; i++){
+		        //console.log (results[i].geometry.location);
+		        createMarker(results[i].geometry.location);
+		        
+		        if (results[i].geometry.location.lat()<south){
+		            south = results[i].geometry.location.lat();
+		        }
+		        if (results[i].geometry.location.lat()>north){
+		            north = results[i].geometry.location.lat();
+		        }
+		        if (results[i].geometry.location.lng()>east){
+		            east = results[i].geometry.location.lng();
+		        }
+		        if (results[i].geometry.location.lng()<west){
+		            west = results[i].geometry.location.lng();
+		        }
+		         //console.log (south + " " + west + " " + north + " " + east);
+		         var southwest = new google.maps.LatLng(south,west);
+		         var northeast = new google.maps.LatLng(north,east);
+		         var bound = new google.maps.LatLngBounds(southwest, northeast);
+		         map.fitBounds(bound);
+		    }
+		} else {
+		    window.console.log('failed to geocode address: '  + status);
+		}
+	    });
+
+	}
+
+function createMarker(pos){
+    var newMarker = new google.maps.Marker({
+        position: pos
+    });
+    console.log(pos);
+    newMarker.setMap(map);
+}
+	</script>
+    </head>
+    <body onload = "initialize()">
+	<div id="map-canvas" style="height:100%"></div>
+    </body>
+</html>

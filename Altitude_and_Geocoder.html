@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html>
+   <head>
+        <title> Net Positive Elevation </title>
+         <style>
+	      html, body {
+		height: 100%;
+		margin: 0px;
+		padding: 0px
+	      }
+	</style>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script>
+	// Good luck!
+	function initialize(){
+	    document.getElementById("button").addEventListener ('click', function(){
+		var address = document.getElementById("start").value;
+		var geocoderFrom = new google.maps.Geocoder();
+		var geocoderTo = new google.maps.Geocoder();
+		var requestFrom = {
+		    address: address
+		};
+		var requestTo = {
+		    address: "Regatta Hotel"
+		};
+		var map;
+		var elevation = new google.maps.ElevationService();
+		
+		geocoderTo.geocode(requestTo, function(resultsTo, statusTo){
+		   var mapOption = {
+		      zoom: 4,
+		      center: resultsTo[0].geometry.location,
+		      mapTypeId: google.maps.MapTypeId.ROADMAP
+		   }
+		   map = new google.maps.Map(document.getElementById("map-canvas"), mapOption);
+		   geocoderFrom.geocode(requestFrom, function(resultsFrom, statusFrom){
+		       if (statusFrom == google.maps.GeocoderStatus.OK){
+		           
+		           path = [resultsFrom[0].geometry.location, resultsTo[0].geometry.location];
+		           var requestElevation = {
+		               path: path,
+		               samples: 256
+		           };
+		           var south, west, north, east;
+		           if (resultsFrom[0].geometry.location.lat()>resultsTo[0].geometry.location.lat()){
+		               south = resultsTo[0].geometry.location.lat();
+		               north = resultsFrom[0].geometry.location.lat();
+		           } else {
+		               north = resultsTo[0].geometry.location.lat();
+		               south = resultsFrom[0].geometry.location.lat();
+		           }
+		           
+		           if (resultsFrom[0].geometry.location.lng()>resultsTo[0].geometry.location.lng()){
+		               west = resultsTo[0].geometry.location.lng();
+		               east = resultsFrom[0].geometry.location.lng();
+		           } else {
+		               east = resultsTo[0].geometry.location.lng();
+		               west = resultsFrom[0].geometry.location.lng();
+		           }
+		           var southwest = new google.maps.LatLng (south, west);
+		           var northeast = new google.maps.LatLng (north, east);
+		           var bounds = new google.maps.LatLngBounds (southwest, northeast);
+		           
+		           map.fitBounds (bounds);
+		           elevation.getElevationAlongPath(requestElevation, function(result, status){
+		              if (status == google.maps.ElevationStatus.OK){
+		                  var polyPath = [resultsFrom[0].geometry.location, resultsTo[0].geometry.location];
+		                  var netPosElev = 0;
+		                  for (i = 0; i<(result.length-1); i++){
+		                      if(result[i+1].elevation>result[i].elevation) {
+		                          netPosElev += result[i+1].elevation - result[i].elevation;
+		                      }
+		                     
+		                  }
+		                  var polylineOptions = {
+		                      path: polyPath,
+		                      map: map
+		                  };
+		                  var newPolyLine = new google.maps.Polyline(polylineOptions);
+		                  var element = document.getElementById("output");
+		                  element.innerText = "Net Positive Elevation: " + netPosElev + "meters";
+		              }
+		           });
+		       } else {
+		           alert ("invalid address!");
+		       }
+		   
+		   });
+		});
+	    });
+	    
+	}
+        </script>
+    </head>
+    <body onload = "initialize()">
+        <input id="start"/><input type="button" id="button" value="Route!"/>
+	<div id="output"></div>
+	<div id="map-canvas" style="height:80%"></div>
+    </body>
+</html>
